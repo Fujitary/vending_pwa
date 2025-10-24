@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>飲み物自動販売機</title>
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { height: 100%; }
+    body { box-sizing: border-box; touch-action: manipulation; user-select: none; }
+    .drink-card { transition: all 0.3s ease; }
+    .drink-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    .quantity-btn { transition: all 0.2s ease; }
+    .quantity-btn:hover { transform: scale(1.1); }
+    .checkout-animation { animation: slideUp 0.5s ease-out; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+    .qr-code { background: linear-gradient(45deg, #00d4aa, #00a693); border-radius: 12px; padding: 20px; }
+    .drink-label { width: 80px; height: 120px; border-radius: 8px; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; color: white; font-weight: bold; text-align: center; margin: 0 auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .coffee-label { background: linear-gradient(135deg, #8B4513, #A0522D);}
+    .tea-label { background: linear-gradient(135deg, #228B22, #32CD32);}
+    .juice-label { background: linear-gradient(135deg, #FF8C00, #FFA500);}
+    .water-label { background: linear-gradient(135deg, #4169E1, #87CEEB);}
+    .cola-label { background: linear-gradient(135deg, #DC143C, #B22222);}
+    .energy-label { background: linear-gradient(135deg, #FFD700, #FFA500);}
+    /* Kiosk tweaks */
+    .kiosk .hide-in-kiosk { display:none !important; }
+    .safe-area { padding-bottom: env(safe-area-inset-bottom); }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-full kiosk">
+  <div class="container mx-auto px-4 py-8 safe-area">
+    <header class="text-center mb-8">
+      <h1 class="text-5xl md:text-4xl font-bold text-gray-800 mb-2">🥤 飲み物自動販売機</h1>
+      <p class="text-lg md:text-base text-gray-600">お好きな飲み物をお選びください</p>
+    </header>
+
+    <main>
+      <div id="product-selection" class="max-w-4xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <!-- コーヒー -->
+          <div class="drink-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div class="text-center mb-4">
+              <div class="drink-label coffee-label mb-3">
+                <div class="text-xs">HOT</div>
+                <div class="text-sm font-bold">COFFEE</div>
+                <div class="text-xs">ホット</div>
+                <div class="text-xs">コーヒー</div>
+              </div>
+              <h3 class="text-2xl md:text-xl font-semibold text-gray-800">ホットコーヒー</h3>
+              <p class="text-3xl md:text-2xl font-bold text-indigo-600 mt-2">¥120</p>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg md:text-base text-gray-600">数量:</span>
+              <div class="flex items-center space-x-3">
+                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('coffee', -1)">-</button>
+                <span id="coffee-qty" class="text-xl md:text-lg font-semibold w-8 text-center">0</span>
+                <button class="quantity-btn bg-indigo-500 hover:bg-indigo-600 text-white w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('coffee', 1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 緑茶 -->
+          <div class="drink-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div class="text-center mb-4">
+              <div class="drink-label tea-label mb-3">
+                <div class="text-xs">GREEN</div>
+                <div class="text-sm font-bold">TEA</div>
+                <div class="text-xs">緑茶</div>
+                <div class="text-xs">日本茶</div>
+              </div>
+              <h3 class="text-2xl md:text-xl font-semibold text-gray-800">緑茶</h3>
+              <p class="text-3xl md:text-2xl font-bold text-green-600 mt-2">¥100</p>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg md:text-base text-gray-600">数量:</span>
+              <div class="flex items-center space-x-3">
+                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('tea', -1)">-</button>
+                <span id="tea-qty" class="text-xl md:text-lg font-semibold w-8 text-center">0</span>
+                <button class="quantity-btn bg-green-500 hover:bg-green-600 text-white w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('tea', 1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ジュース -->
+          <div class="drink-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div class="text-center mb-4">
+              <div class="drink-label juice-label mb-3">
+                <div class="text-xs">ORANGE</div>
+                <div class="text-sm font-bold">JUICE</div>
+                <div class="text-xs">オレンジ</div>
+                <div class="text-xs">100%</div>
+              </div>
+              <h3 class="text-2xl md:text-xl font-semibold text-gray-800">オレンジジュース</h3>
+              <p class="text-3xl md:text-2xl font-bold text-orange-600 mt-2">¥150</p>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg md:text-base text-gray-600">数量:</span>
+              <div class="flex items-center space-x-3">
+                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('juice', -1)">-</button>
+                <span id="juice-qty" class="text-xl md:text-lg font-semibold w-8 text-center">0</span>
+                <button class="quantity-btn bg-orange-500 hover:bg-orange-600 text-white w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('juice', 1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 水 -->
+          <div class="drink-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div class="text-center mb-4">
+              <div class="drink-label water-label mb-3">
+                <div class="text-xs">MINERAL</div>
+                <div class="text-sm font-bold">WATER</div>
+                <div class="text-xs">天然水</div>
+                <div class="text-xs">500ml</div>
+              </div>
+              <h3 class="text-2xl md:text-xl font-semibold text-gray-800">ミネラルウォーター</h3>
+              <p class="text-3xl md:text-2xl font-bold text-blue-600 mt-2">¥80</p>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg md:text-base text-gray-600">数量:</span>
+              <div class="flex items-center space-x-3">
+                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('water', -1)">-</button>
+                <span id="water-qty" class="text-xl md:text-lg font-semibold w-8 text-center">0</span>
+                <button class="quantity-btn bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('water', 1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- コーラ -->
+          <div class="drink-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div class="text-center mb-4">
+              <div class="drink-label cola-label mb-3">
+                <div class="text-xs">COLA</div>
+                <div class="text-sm font-bold">CLASSIC</div>
+                <div class="text-xs">コーラ</div>
+                <div class="text-xs">350ml</div>
+              </div>
+              <h3 class="text-2xl md:text-xl font-semibold text-gray-800">コーラ</h3>
+              <p class="text-3xl md:text-2xl font-bold text-red-600 mt-2">¥130</p>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg md:text-base text-gray-600">数量:</span>
+              <div class="flex items-center space-x-3">
+                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('cola', -1)">-</button>
+                <span id="cola-qty" class="text-xl md:text-lg font-semibold w-8 text-center">0</span>
+                <button class="quantity-btn bg-red-500 hover:bg-red-600 text-white w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('cola', 1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- エナジードリンク -->
+          <div class="drink-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div class="text-center mb-4">
+              <div class="drink-label energy-label mb-3">
+                <div class="text-xs">ENERGY</div>
+                <div class="text-sm font-bold">DRINK</div>
+                <div class="text-xs">エナジー</div>
+                <div class="text-xs">250ml</div>
+              </div>
+              <h3 class="text-2xl md:text-xl font-semibold text-gray-800">エナジードリンク</h3>
+              <p class="text-3xl md:text-2xl font-bold text-yellow-600 mt-2">¥200</p>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg md:text-base text-gray-600">数量:</span>
+              <div class="flex items-center space-x-3">
+                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('energy', -1)">-</button>
+                <span id="energy-qty" class="text-xl md:text-lg font-semibold w-8 text-center">0</span>
+                <button class="quantity-btn bg-yellow-500 hover:bg-yellow-600 text-white w-10 h-10 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-lg md:text-base" onclick="changeQuantity('energy', 1)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 合計と会計ボタン -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-2xl md:text-xl font-semibold text-gray-800">合計金額:</span>
+            <span id="total-amount" class="text-4xl md:text-3xl font-bold text-indigo-600">¥0</span>
+          </div>
+          <button id="checkout-btn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-5 md:py-4 px-6 rounded-xl text-xl md:text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" onclick="proceedToPayment()" disabled>
+            会計に進む
+          </button>
+        </div>
+      </div>
+
+      <!-- 支払い画面 -->
+      <div id="payment-screen" class="max-w-md mx-auto hidden">
+        <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-200 checkout-animation">
+          <div class="text-center mb-6">
+            <h2 class="text-3xl md:text-2xl font-bold text-gray-800 mb-2">お支払い</h2>
+            <p class="text-lg md:text-base text-gray-600">QRコードでお支払いください</p>
+          </div>
+
+          <!-- 注文内容 -->
+          <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="text-lg md:text-base font-semibold text-gray-800 mb-3">ご注文内容</h3>
+            <div id="order-summary" class="space-y-2 text-base md:text-sm"></div>
+            <div class="border-t pt-3 mt-3">
+              <div class="flex justify-between items-center">
+                <span class="text-lg md:text-base font-semibold">合計:</span>
+                <span id="final-total" class="text-2xl md:text-xl font-bold text-indigo-600"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 支払い案内 -->
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-6 text-center mb-6">
+            <div class="text-white mb-4">
+              <div class="text-6xl mb-3">🧊</div>
+              <div class="text-2xl md:text-xl font-bold mb-2">冷蔵庫に貼ってある</div>
+              <div class="text-2xl md:text-xl font-bold mb-2">QRコードを読み取って</div>
+              <div class="text-2xl md:text-xl font-bold">お支払いください</div>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-lg p-3 text-white text-base md:text-sm">
+              💡 冷蔵庫の扉をご確認ください
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 md:py-3 px-6 rounded-lg text-lg md:text-base transition-colors duration-300" onclick="simulatePayment()">
+              支払い完了（デモ）
+            </button>
+            <button class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 md:py-3 px-6 rounded-lg text-lg md:text-base transition-colors duration-300" onclick="goBack()">
+              戻る
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 完了画面 -->
+      <div id="completion-screen" class="max-w-md mx-auto hidden">
+        <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-200 text-center checkout-animation">
+          <div class="text-6xl mb-4">✅</div>
+          <h2 class="text-3xl md:text-2xl font-bold text-green-600 mb-4">お支払い完了</h2>
+          <p class="text-lg md:text-base text-gray-600 mb-6">ありがとうございました！<br>商品をお受け取りください。</p>
+          <button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 md:py-3 px-6 rounded-lg text-lg md:text-base transition-colors duration-300" onclick="resetApp()">
+            新しい注文
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 商品データ
+    const products = {
+      coffee: { name: 'ホットコーヒー', price: 120, quantity: 0 },
+      tea: { name: '緑茶', price: 100, quantity: 0 },
+      juice: { name: 'オレンジジュース', price: 150, quantity: 0 },
+      water: { name: 'ミネラルウォーター', price: 80, quantity: 0 },
+      cola: { name: 'コーラ', price: 130, quantity: 0 },
+      energy: { name: 'エナジードリンク', price: 200, quantity: 0 }
+    };
+
+    // 数量変更
+    function changeQuantity(productId, change) {
+      const product = products[productId];
+      const newQuantity = Math.max(0, product.quantity + change);
+      product.quantity = newQuantity;
+      document.getElementById(`${productId}-qty`).textContent = newQuantity;
+      updateTotal();
+      saveCart();
+    }
+
+    // 合計金額更新
+    function updateTotal() {
+      let total = 0;
+      let hasItems = false;
+
+      for (const productId in products) {
+        const product = products[productId];
+        total += product.price * product.quantity;
+        if (product.quantity > 0) hasItems = true;
+      }
+      document.getElementById('total-amount').textContent = `¥${total}`;
+      document.getElementById('checkout-btn').disabled = !hasItems;
+    }
+
+    // 支払い画面に進む
+    function proceedToPayment() {
+      const orderSummary = document.getElementById('order-summary');
+      const finalTotal = document.getElementById('final-total');
+
+      orderSummary.innerHTML = '';
+      let total = 0;
+
+      for (const productId in products) {
+        const product = products[productId];
+        if (product.quantity > 0) {
+          const subtotal = product.price * product.quantity;
+          total += subtotal;
+
+          const orderItem = document.createElement('div');
+          orderItem.className = 'flex justify-between';
+          orderItem.innerHTML = `<span>${product.name} × ${product.quantity}</span><span>¥${subtotal}</span>`;
+          orderSummary.appendChild(orderItem);
+        }
+      }
+      finalTotal.textContent = `¥${total}`;
+
+      // 画面切り替え
+      document.getElementById('product-selection').classList.add('hidden');
+      document.getElementById('payment-screen').classList.remove('hidden');
+    }
+
+    // 支払いシミュレーション
+    function simulatePayment() {
+      document.getElementById('payment-screen').classList.add('hidden');
+      document.getElementById('completion-screen').classList.remove('hidden');
+      localStorage.removeItem('vending_cart');
+    }
+
+    // 戻る
+    function goBack() {
+      document.getElementById('payment-screen').classList.add('hidden');
+      document.getElementById('product-selection').classList.remove('hidden');
+    }
+
+    // アプリリセット
+    function resetApp() {
+      for (const productId in products) {
+        products[productId].quantity = 0;
+        document.getElementById(`${productId}-qty`).textContent = '0';
+      }
+      updateTotal();
+      document.getElementById('completion-screen').classList.add('hidden');
+      document.getElementById('product-selection').classList.remove('hidden');
+    }
+
+    // カート保存/復元（停電や再起動時の保険）
+    function saveCart() {
+      const state = {};
+      for (const id in products) state[id] = products[id].quantity;
+      localStorage.setItem('vending_cart', JSON.stringify(state));
+    }
+    function loadCart() {
+      try {
+        const state = JSON.parse(localStorage.getItem('vending_cart')) || {};
+        for (const id in state) {
+          if (products[id]) {
+            products[id].quantity = state[id];
+            const el = document.getElementById(`${id}-qty`);
+            if (el) el.textContent = String(state[id]);
+          }
+        }
+      } catch(e){/* noop */}
+    }
+
+    // PWA: SW登録
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+
+    // 初期化
+    loadCart();
+    updateTotal();
+  </script>
+</body>
+</html>
