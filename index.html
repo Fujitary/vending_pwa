@@ -539,30 +539,22 @@ function doGoogleLogin() {
   var provider = new firebase.auth.GoogleAuthProvider();
   provider.addScope('https://www.googleapis.com/auth/drive.file');
   provider.addScope('https://www.googleapis.com/auth/drive.appdata');
-  // PWAモード（ホーム画面追加）ではpopupが使えないのでredirectを使用
-  var isPWA = window.navigator.standalone === true
-    || window.matchMedia('(display-mode: standalone)').matches;
 
-  if (isPWA) {
-    // PWA: redirectで同じウィンドウ内でGoogleへ
-    auth.signInWithRedirect(provider).catch(function(err) {
-      console.error('[Auth] redirect失敗', err);
+  // iOSのPWA環境での signInWithRedirect はセッションが切れ無限ループするため、
+  // PWA・通常ブラウザ問わず signInWithPopup に統一します。
+  auth.signInWithPopup(provider)
+    .then(function(result) {
+      if (result.credential && result.credential.accessToken) {
+        driveAccessToken = result.credential.accessToken;
+      }
+      return handleAuthResult(result.user);
+    })
+    .catch(function(err) {
+      console.error('[Auth] popup失敗', err);
+      // エラーが「ポップアップがブロックされた」系のものなら、
+      // ユーザーにボタンを直接タップしてログインするよう促すメッセージを出すと親切です
       alert('ログインに失敗しました: ' + err.message);
     });
-  } else {
-    // 通常ブラウザ: popupで開く
-    auth.signInWithPopup(provider)
-      .then(function(result) {
-        if (result.credential && result.credential.accessToken) {
-          driveAccessToken = result.credential.accessToken;
-        }
-        return handleAuthResult(result.user);
-      })
-      .catch(function(err) {
-        console.error('[Auth] popup失敗', err);
-        alert('ログインに失敗しました: ' + err.message);
-      });
-  }
 }
 
 function handleAuthResult(firebaseUser) {
